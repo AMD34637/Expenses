@@ -246,7 +246,7 @@
   const KEY = "family-budget-v1";
   const AR_MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 
-  let state = { members: ["أنا"], budgets: {}, tx: [] };
+  let state = { members: ["عبدالله", "ثناء"], budgets: {}, tx: [] };
   let mem = false;
   try {
     const raw = localStorage.getItem(KEY);
@@ -379,6 +379,17 @@
   } catch (e) {}
   function savePending() { try { localStorage.setItem(PEND_KEY, JSON.stringify(pending)); } catch (e) {} }
   function metaObj() { return { members: state.members, budgets: state.budgets }; }
+  function migrateMembers() {
+    if (state.members.length === 1 && state.members[0] === "أنا") {
+      state.members = ["عبدالله", "ثناء"];
+      let remapped = false;
+      state.tx.forEach(t => { if (t.member === "أنا") { t.member = "عبدالله"; remapped = true; } });
+      save();
+      postOp(remapped ? { action: "full", tx: state.tx, meta: metaObj() } : { action: "meta", meta: metaObj() });
+      return true;
+    }
+    return false;
+  }
   function syncStatus(msg) { document.getElementById("sync-status").textContent = msg; }
   function syncUI() {
     document.getElementById("sheet-url").value = sheetUrl;
@@ -410,6 +421,7 @@
         state.members = data.meta.members;
         state.budgets = data.meta.budgets || {};
       }
+      migrateMembers();
       save(); refreshMembers(); render();
       syncStatus("مربوط بقوقل شيت ✓ — آخر مزامنة الآن");
     }
@@ -617,6 +629,7 @@
     });
   }
 
+  migrateMembers();
   refreshMembers();
   render();
   syncUI();
