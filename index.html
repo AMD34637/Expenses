@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#602650" />
+  <meta name="description" content="تطبيق ميزانية شخصية مجاني يعمل دون اتصال" />
+  <title>مصروفاتي</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">تطبيق الميزانية الشخصية</p>
+        <h1>مصروفاتي</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="installBtn" class="ghost-btn hidden" type="button">تثبيت التطبيق</button>
+        <button id="themeBtn" class="icon-btn" type="button" aria-label="تغيير المظهر">◐</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="dashboard" class="page active">
+        <div class="month-row">
+          <button id="prevMonth" class="icon-btn" type="button">‹</button>
+          <div>
+            <span class="muted">ملخص الشهر</span>
+            <h2 id="monthTitle"></h2>
+          </div>
+          <button id="nextMonth" class="icon-btn" type="button">›</button>
+        </div>
+
+        <div class="hero-card">
+          <span>المتبقي المتاح</span>
+          <strong id="remainingValue">0 ر.س</strong>
+          <div class="progress-track"><div id="budgetProgress" class="progress-bar"></div></div>
+          <small id="budgetMessage">أضف دخلك ومصروفاتك لعرض الملخص.</small>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card"><span>الدخل</span><strong id="incomeValue">0 ر.س</strong></article>
+          <article class="stat-card"><span>المصروفات</span><strong id="expensesValue">0 ر.س</strong></article>
+          <article class="stat-card"><span>الالتزامات</span><strong id="obligationsValue">0 ر.س</strong></article>
+          <article class="stat-card"><span>المدخرات</span><strong id="savingsValue">0 ر.س</strong></article>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h3>الإنفاق حسب التصنيف</h3>
+            <button class="text-btn" data-page-link="reports" type="button">عرض التقارير</button>
+          </div>
+          <div id="categoryBreakdown" class="category-list empty-state">لا توجد مصروفات لهذا الشهر.</div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h3>آخر العمليات</h3></div>
+          <div id="recentTransactions" class="transaction-list empty-state">لا توجد عمليات بعد.</div>
+        </section>
+      </section>
+
+      <section id="transactions" class="page">
+        <div class="section-title">
+          <div><p class="eyebrow">الحركات المالية</p><h2>الدخل والمصروفات</h2></div>
+          <button id="addTransactionBtn" class="primary-btn" type="button">+ إضافة عملية</button>
+        </div>
+        <div class="filter-row">
+          <select id="transactionTypeFilter"><option value="all">كل العمليات</option><option value="income">الدخل</option><option value="expense">المصروفات</option></select>
+          <input id="transactionSearch" type="search" placeholder="بحث بالتصنيف أو الملاحظة" />
+        </div>
+        <div id="transactionsList" class="transaction-list empty-state">لا توجد عمليات.</div>
+      </section>
+
+      <section id="obligations" class="page">
+        <div class="section-title">
+          <div><p class="eyebrow">المدفوعات الدورية</p><h2>الالتزامات الشهرية</h2></div>
+          <button id="addObligationBtn" class="primary-btn" type="button">+ إضافة التزام</button>
+        </div>
+        <div id="obligationsList" class="cards-list empty-state">لا توجد التزامات.</div>
+      </section>
+
+      <section id="savings" class="page">
+        <div class="section-title">
+          <div><p class="eyebrow">خططك المستقبلية</p><h2>أهداف الادخار</h2></div>
+          <button id="addSavingBtn" class="primary-btn" type="button">+ إضافة هدف</button>
+        </div>
+        <div id="savingsList" class="cards-list empty-state">لا توجد أهداف ادخار.</div>
+      </section>
+
+      <section id="reports" class="page">
+        <div class="section-title"><div><p class="eyebrow">تحليل مبسط</p><h2>التقارير والنسخ الاحتياطي</h2></div></div>
+        <div class="report-grid">
+          <article class="panel"><h3>نسبة الادخار</h3><strong id="savingRate" class="report-number">0%</strong><p class="muted">من إجمالي الدخل للشهر المحدد.</p></article>
+          <article class="panel"><h3>نسبة الإنفاق</h3><strong id="spendingRate" class="report-number">0%</strong><p class="muted">المصروفات والالتزامات من الدخل.</p></article>
+          <article class="panel full"><h3>أعلى التصنيفات</h3><div id="topCategories" class="category-list empty-state">لا توجد بيانات.</div></article>
+        </div>
+        <section class="panel">
+          <h3>إدارة البيانات</h3>
+          <div class="action-grid">
+            <button id="exportCsvBtn" class="secondary-btn" type="button">تصدير CSV</button>
+            <button id="backupBtn" class="secondary-btn" type="button">نسخة احتياطية JSON</button>
+            <label class="secondary-btn file-label">استعادة نسخة<input id="restoreInput" type="file" accept="application/json" hidden /></label>
+            <button id="clearDataBtn" class="danger-btn" type="button">مسح كل البيانات</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="التنقل الرئيسي">
+      <button class="nav-item active" data-page="dashboard"><span>⌂</span><small>الرئيسية</small></button>
+      <button class="nav-item" data-page="transactions"><span>↕</span><small>العمليات</small></button>
+      <button class="nav-item" data-page="obligations"><span>◫</span><small>الالتزامات</small></button>
+      <button class="nav-item" data-page="savings"><span>◎</span><small>الادخار</small></button>
+      <button class="nav-item" data-page="reports"><span>▥</span><small>التقارير</small></button>
+    </nav>
+  </div>
+
+  <dialog id="transactionDialog" class="modal">
+    <form id="transactionForm" method="dialog">
+      <div class="modal-head"><h3 id="transactionDialogTitle">إضافة عملية</h3><button class="icon-btn close-dialog" type="button">×</button></div>
+      <input type="hidden" name="id" />
+      <label>نوع العملية<select name="type" required><option value="expense">مصروف</option><option value="income">دخل</option></select></label>
+      <label>المبلغ<input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required /></label>
+      <label>التصنيف<select name="category" required></select></label>
+      <label>التاريخ<input name="date" type="date" required /></label>
+      <label>طريقة الدفع<select name="paymentMethod"><option>بطاقة</option><option>نقد</option><option>تحويل</option><option>أخرى</option></select></label>
+      <label>ملاحظة<input name="note" maxlength="120" placeholder="اختياري" /></label>
+      <div class="modal-actions"><button class="ghost-btn close-dialog" type="button">إلغاء</button><button class="primary-btn" value="save">حفظ</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="obligationDialog" class="modal">
+    <form id="obligationForm" method="dialog">
+      <div class="modal-head"><h3>إضافة التزام</h3><button class="icon-btn close-dialog" type="button">×</button></div>
+      <input type="hidden" name="id" />
+      <label>اسم الالتزام<input name="name" required placeholder="مثال: إيجار المنزل" /></label>
+      <label>المبلغ الشهري<input name="amount" type="number" min="0.01" step="0.01" required /></label>
+      <label>يوم الاستحقاق<input name="dueDay" type="number" min="1" max="31" required /></label>
+      <label class="check-row"><input name="isPaid" type="checkbox" /> تم السداد هذا الشهر</label>
+      <div class="modal-actions"><button class="ghost-btn close-dialog" type="button">إلغاء</button><button class="primary-btn" value="save">حفظ</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="savingDialog" class="modal">
+    <form id="savingForm" method="dialog">
+      <div class="modal-head"><h3>إضافة هدف ادخار</h3><button class="icon-btn close-dialog" type="button">×</button></div>
+      <input type="hidden" name="id" />
+      <label>اسم الهدف<input name="name" required placeholder="مثال: سفر" /></label>
+      <label>المبلغ المستهدف<input name="target" type="number" min="1" step="0.01" required /></label>
+      <label>المبلغ المدخر حاليًا<input name="saved" type="number" min="0" step="0.01" required /></label>
+      <label>المساهمة الشهرية<input name="monthly" type="number" min="0" step="0.01" required /></label>
+      <div class="modal-actions"><button class="ghost-btn close-dialog" type="button">إلغاء</button><button class="primary-btn" value="save">حفظ</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name":"مصروفاتي - الميزانية الشخصية",
+  "short_name":"مصروفاتي",
+  "description":"تطبيق ميزانية شخصية مجاني يعمل دون اتصال",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#f6f3f5",
+  "theme_color":"#602650",
+  "lang":"ar",
+  "dir":"rtl",
+  "icons":[]
+}
