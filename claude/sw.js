@@ -1,4 +1,4 @@
-const CACHE = "family-budget-v4";
+const CACHE = "family-budget-v5";
 const ASSETS = [
   "./family-budget.html",
   "./reports.html",
