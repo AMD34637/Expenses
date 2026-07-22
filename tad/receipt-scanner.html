@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#602650" />
+  <title>مسح الفاتورة — TAD Expenses</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;color:#211820;background:#f8f4f7}*{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);min-height:100vh}main{width:min(760px,100%);margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.back{color:#602650;text-decoration:none;font-weight:800}.logo{width:42px;height:42px;border-radius:14px;background:#602650;color:white;display:grid;place-items:center;font-weight:900}.card{background:#fff;border:1px solid #eadfe7;border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 8px 28px #4d17340c}h1{font-size:25px;margin:4px 0}h2{font-size:18px;margin:0 0 12px}.muted{color:#85777f;font-size:14px;line-height:1.7}.picker{display:block;border:2px dashed #caaec1;border-radius:18px;padding:24px;text-align:center;color:#602650;font-weight:800;cursor:pointer}.picker input{display:none}#preview{width:100%;max-height:360px;object-fit:contain;border-radius:16px;margin-top:14px;display:none}.progress{height:9px;background:#eee5eb;border-radius:99px;overflow:hidden;margin:12px 0}.progress i{display:block;height:100%;width:0;background:#602650;transition:.2s}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:grid;gap:6px;font-size:13px;color:#6d5e67}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;border:1px solid #dfd2da;border-radius:12px;padding:11px;background:#fff;color:#211820}.items{display:grid;gap:10px}.item{border:1px solid #eadfe7;border-radius:16px;padding:12px}.item-grid{display:grid;grid-template-columns:2fr .7fr 1fr 1fr;gap:7px}.item-actions{display:flex;justify-content:flex-end;margin-top:8px}.remove{border:0;background:#fff0f0;color:#a02e2e;border-radius:9px;padding:7px 10px}.actions{display:flex;gap:9px;position:sticky;bottom:8px}.primary,.secondary{border:0;border-radius:14px;padding:13px 17px;font-weight:800}.primary{background:#602650;color:#fff;flex:1}.secondary{background:#efe3eb;color:#602650}.primary:disabled{opacity:.5}.status{padding:11px;border-radius:12px;background:#f4ebf1;color:#602650;font-size:14px;display:none}.status.ok{display:block;background:#e8f6ef;color:#196443}.status.bad{display:block;background:#fff0f0;color:#8b2828}@media(max-width:560px){.grid{grid-template-columns:1fr}.item-grid{grid-template-columns:1fr 1fr}.item-name{grid-column:1/-1}}
+  </style>
+</head>
+<body><main>
+  <div class="top"><a class="back" href="./">→ الرئيسية</a><div class="logo">ت</div></div>
+  <div class="card">
+    <h1>مسح فاتورة كاملة</h1>
+    <p class="muted">صوّر الفاتورة بوضوح. سنقرأ بيانات المتجر والأصناف والأسعار والضريبة، ثم يمكنك مراجعتها قبل إضافتها للتطبيق وGoogle Sheets.</p>
+    <label class="picker">📷 تصوير أو اختيار الفاتورة<input id="image" type="file" accept="image/*" capture="environment"></label>
+    <img id="preview" alt="معاينة الفاتورة" />
+    <div class="progress"><i id="bar"></i></div><div id="ocr-status" class="muted">بانتظار صورة الفاتورة</div>
+  </div>
+  <div class="card" id="review" hidden>
+    <h2>بيانات الفاتورة</h2>
+    <div class="grid">
+      <label>اسم المتجر<input id="merchant"></label><label>رقم الفاتورة<input id="invoice"></label>
+      <label>التاريخ<input id="date" type="date"></label><label>الوقت<input id="time" type="time"></label>
+      <label>صاحب المصروف<select id="owner"><option>عبدالله</option><option>ثناء</option><option>مشترك</option></select></label>
+      <label>الحساب<select id="account"></select></label>
+      <label>الإجمالي قبل الضريبة<input id="subtotal" type="number" step="0.01"></label><label>الضريبة<input id="vat" type="number" step="0.01"></label>
+      <label>الخصم<input id="discount" type="number" step="0.01"></label><label>الإجمالي النهائي<input id="total" type="number" step="0.01"></label>
+    </div>
+  </div>
+  <div class="card" id="items-card" hidden><h2>تفاصيل الأصناف</h2><div id="items" class="items"></div><button id="add-item" class="secondary" type="button">+ إضافة صنف</button></div>
+  <div id="message" class="status"></div>
+  <div class="actions" id="save-actions" hidden><button id="save" class="primary">حفظ الفاتورة والأصناف</button></div>
+</main>
+<script>
+const DATA_KEY='dowi-expenses-data-v1', TOKEN_KEY='tad-sync-token';
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbzn3oYWOtoZC5Odx8_WppFw-QEGpGuxVNn-M_uwY2x2I0awcu5iJpquZnGo1R91mH98Ag/exec';
+const $=id=>document.getElementById(id), money=s=>{const m=String(s||'').replace(/,/g,'').match(/\d+(?:\.\d{1,2})?/g);return m?Number(m.at(-1)):0};
+let rawText='';
+function localData(){try{return JSON.parse(localStorage.getItem(DATA_KEY)||'{}')}catch{return {}}}
+function dateFromText(t){const m=t.match(/(20\d{2})[\/\-.](\d{1,2})[\/\-.](\d{1,2})|(\d{1,2})[\/\-.](\d{1,2})[\/\-.](20\d{2})/);if(!m)return new Date().toISOString().slice(0,10);return m[1]?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:`${m[6]}-${m[5].padStart(2,'0')}-${m[4].padStart(2,'0')}`}
+function parseReceipt(text){
+  const lines=text.split(/\n+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const numberLine=lines.find(x=>/(فاتورة|invoice|receipt).{0,15}[#:\-]?\s*[A-Z0-9-]{3,}/i.test(x))||'';
+  const invoice=(numberLine.match(/[#:\-]?\s*([A-Z0-9-]{3,})\s*$/i)||[])[1]||'';
+  const totalLines=lines.filter(x=>/(الإجمالي|المجموع|total|amount due)/i.test(x));
+  const vatLine=lines.find(x=>/(ضريبة|vat|tax)/i.test(x))||'';
+  const discountLine=lines.find(x=>/(خصم|discount)/i.test(x))||'';
+  const candidateItems=[];
+  lines.forEach(line=>{if(/(إجمالي|المجموع|total|ضريبة|vat|tax|خصم|discount|subtotal|كاش|cash|مدى|visa|شكرا|thank)/i.test(line))return;const matches=line.match(/\d+(?:[.,]\d{1,2})/g);if(!matches||!/[\p{L}]/u.test(line))return;const price=money(matches.at(-1));if(!price)return;let name=line.replace(/\d+(?:[.,]\d{1,2})/g,' ').replace(/\s+/g,' ').trim();const qtyMatch=line.match(/^\s*(\d{1,3})\s*[xX×]?/);candidateItems.push({name:name||'صنف',qty:qtyMatch?Number(qtyMatch[1]):1,unit:price,total:price});});
+  return {merchant:lines.find(x=>/[\p{L}]{3}/u.test(x))||'',invoice,date:dateFromText(text),subtotal:totalLines.length>1?money(totalLines[0]):0,vat:money(vatLine),discount:money(discountLine),total:money(totalLines.at(-1)||''),items:candidateItems.slice(0,80)};
+}
+function addItem(v={name:'',qty:1,unit:0,total:0}){const el=document.createElement('div');el.className='item';el.innerHTML=`<div class="item-grid"><label class="item-name">الصنف<input data-k="name"></label><label>الكمية<input data-k="qty" type="number" step="0.01"></label><label>سعر الوحدة<input data-k="unit" type="number" step="0.01"></label><label>الإجمالي<input data-k="total" type="number" step="0.01"></label></div><div class="item-actions"><button class="remove" type="button">حذف</button></div>`;Object.entries(v).forEach(([k,val])=>{const i=el.querySelector(`[data-k="${k}"]`);if(i)i.value=val});el.querySelector('.remove').onclick=()=>el.remove();$('items').appendChild(el)}
+function showParsed(r){$('merchant').value=r.merchant;$('invoice').value=r.invoice;$('date').value=r.date;$('time').value=new Date().toTimeString().slice(0,5);$('subtotal').value=r.subtotal||'';$('vat').value=r.vat||'';$('discount').value=r.discount||'';$('total').value=r.total||'';$('items').innerHTML='';(r.items.length?r.items:[{}]).forEach(addItem);$('review').hidden=$('items-card').hidden=$('save-actions').hidden=false}
+$('add-item').onclick=()=>addItem();
+$('image').onchange=async e=>{const file=e.target.files[0];if(!file)return;const url=URL.createObjectURL(file);$('preview').src=url;$('preview').style.display='block';$('ocr-status').textContent='جاري قراءة الفاتورة…';$('bar').style.width='5%';try{const result=await Tesseract.recognize(file,'ara+eng',{logger:m=>{if(m.progress){$('bar').style.width=Math.round(m.progress*100)+'%';$('ocr-status').textContent=m.status==='recognizing text'?`قراءة النص ${Math.round(m.progress*100)}٪`:'تجهيز قارئ الفاتورة…'}}});rawText=result.data.text;showParsed(parseReceipt(rawText));$('ocr-status').textContent='اكتملت القراءة — راجع البيانات والأصناف قبل الحفظ';$('bar').style.width='100%'}catch(err){$('ocr-status').textContent='تعذرت القراءة. جرّب صورة أوضح أو أدخل التفاصيل يدويًا.';showParsed({merchant:'',invoice:'',date:new Date().toISOString().slice(0,10),items:[]})}};
+async function saveCloud(data){const token=localStorage.getItem(TOKEN_KEY)||'';if(!token)throw Error('رمز مزامنة Google Sheets غير موجود. افتح التطبيق واضغط تحديث وأدخل الرمز أولًا.');const r=await fetch(CLOUD_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token,data})});const j=await r.json();if(!r.ok||j?.error||j?.ok===false)throw Error(j?.error||'تعذر الحفظ في Google Sheets')}
+$('save').onclick=async()=>{const btn=$('save');btn.disabled=true;$('message').className='status';try{let data=localData();data.transactions=data.transactions||[];data.accounts=data.accounts||[];const receiptId=crypto.randomUUID(),merchant=$('merchant').value.trim()||'فاتورة',invoice=$('invoice').value.trim()||receiptId.slice(0,8),date=new Date(`${$('date').value||new Date().toISOString().slice(0,10)}T${$('time').value||'12:00'}`).toISOString(),owner=$('owner').value,account=$('account').value;const rows=[...document.querySelectorAll('.item')].map(el=>Object.fromEntries([...el.querySelectorAll('[data-k]')].map(i=>[i.dataset.k,i.dataset.k==='name'?i.value.trim():Number(i.value||0)]))).filter(x=>x.name&&x.total>0);if(!rows.length)throw Error('أضف صنفًا واحدًا على الأقل مع إجماليه.');const vat=Number($('vat').value||0),grand=Number($('total').value||rows.reduce((s,x)=>s+x.total,0));const added=rows.map((x,index)=>({id:crypto.randomUUID(),type:'expense',amount:x.total,title:x.name,category:'التسوق',account,owner,date,note:`فاتورة: ${invoice} | المتجر: ${merchant} | الصنف ${index+1}/${rows.length} | الكمية: ${x.qty||1} | سعر الوحدة: ${x.unit||x.total} | ضريبة الفاتورة: ${vat} | إجمالي الفاتورة: ${grand}`,recurring:false,receiptId,invoiceNumber:invoice,merchant,quantity:x.qty||1,unitPrice:x.unit||x.total,receiptVat:vat,receiptTotal:grand}));data.transactions=[...added,...data.transactions];data.accounts=data.accounts.map(a=>a.name===account?{...a,balance:Number(a.balance||0)-grand}:a);localStorage.setItem(DATA_KEY,JSON.stringify(data));await saveCloud(data);$('message').textContent=`تم حفظ الفاتورة و${added.length} صنف في التطبيق وGoogle Sheets ✓`;$('message').className='status ok';setTimeout(()=>location.href='./transactions',1800)}catch(err){$('message').textContent=err.message;$('message').className='status bad';btn.disabled=false}}
+const data=localData(),accounts=(data.accounts||[]);$('account').innerHTML=(accounts.length?accounts:[{name:'الحساب الرئيسي'}]).map(a=>`<option>${a.name}</option>`).join('');
+</script></body></html>
