@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#602650">
+  <title>حذف سجل — TAD Expenses</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;color:#211820;background:#f8f4f7}*{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);min-height:100vh}main{width:min(760px,100%);margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.back{color:#602650;text-decoration:none;font-weight:800}.logo{width:42px;height:42px;border-radius:14px;background:#602650;color:#fff;display:grid;place-items:center;font-weight:900}.card{background:#fff;border:1px solid #eadfe7;border-radius:22px;padding:18px;box-shadow:0 8px 28px #4d17340c}h1{font-size:25px;margin:2px 0 8px}.muted{color:#85777f;font-size:14px;line-height:1.7}.filters{display:grid;grid-template-columns:1fr auto;gap:9px;margin:16px 0}input,button{font:inherit}input{width:100%;border:1px solid #dfd2da;border-radius:13px;padding:12px;background:#fff}.refresh{border:0;border-radius:13px;padding:0 16px;background:#efe3eb;color:#602650;font-weight:800}.records{display:grid;gap:10px}.record{border:1px solid #eadfe7;border-radius:16px;padding:13px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.record h2{font-size:16px;margin:0 0 5px}.meta{color:#85777f;font-size:12px;line-height:1.7}.amount{font-weight:900;margin-top:5px}.delete{border:0;background:#fff0f0;color:#a02e2e;border-radius:11px;padding:10px 12px;font-weight:800}.empty{text-align:center;padding:30px;color:#85777f}.status{display:none;padding:11px;margin-bottom:12px;border-radius:12px;font-size:14px}.status.show{display:block}.status.ok{background:#e8f6ef;color:#196443}.status.bad{background:#fff0f0;color:#8b2828}
+  </style>
+</head>
+<body><main>
+  <div class="top"><a class="back" href="./">→ الرئيسية</a><div class="logo">ت</div></div>
+  <section class="card">
+    <h1>حذف سجل</h1>
+    <p class="muted">اختر العملية التي تريد حذفها. بعد التأكيد سيُحذف السجل من التطبيق وGoogle Sheets ويُصحّح رصيد الحساب المرتبط به.</p>
+    <div id="status" class="status"></div>
+    <div class="filters"><input id="search" type="search" placeholder="ابحث بالاسم أو التصنيف أو المالك"><button id="refresh" class="refresh">تحديث</button></div>
+    <div id="records" class="records"></div>
+  </section>
+</main>
+<script>
+const DATA_KEY='dowi-expenses-data-v1',TOKEN_KEY='tad-sync-token';
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbzn3oYWOtoZC5Odx8_WppFw-QEGpGuxVNn-M_uwY2x2I0awcu5iJpquZnGo1R91mH98Ag/exec';
+const $=id=>document.getElementById(id);
+let data={transactions:[],accounts:[]};
+function localData(){try{return JSON.parse(localStorage.getItem(DATA_KEY)||'{}')}catch{return {}}}
+function show(message,type='ok'){$('status').textContent=message;$('status').className=`status show ${type}`}
+function amount(v){return new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)}
+function date(v){try{return new Intl.DateTimeFormat('ar-SA',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v))}catch{return v||''}}
+function render(){
+  const q=$('search').value.trim().toLowerCase();
+  const rows=[...(data.transactions||[])].filter(t=>[t.title,t.category,t.owner,t.account,t.note].join(' ').toLowerCase().includes(q)).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $('records').innerHTML=rows.length?'':'<div class="empty">لا توجد سجلات مطابقة</div>';
+  rows.forEach(t=>{const el=document.createElement('article');el.className='record';el.innerHTML=`<div><h2></h2><div class="meta"></div><div class="amount"></div></div><button class="delete" type="button">حذف</button>`;el.querySelector('h2').textContent=t.title||t.category||'عملية';el.querySelector('.meta').textContent=`${t.owner||'مشترك'} • ${t.category||''} • ${t.account||''} • ${date(t.date)}`;el.querySelector('.amount').textContent=`${t.type==='income'?'+':'−'} ${amount(t.amount)}`;el.querySelector('.delete').onclick=()=>removeRecord(t.id);$('records').appendChild(el)});
+}
+async function cloudSave(next){const token=localStorage.getItem(TOKEN_KEY)||'';if(!token)throw Error('رمز مزامنة Google Sheets غير موجود. ارجع للرئيسية واضغط تحديث وأدخل الرمز.');const r=await fetch(CLOUD_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token,data:next})});const j=await r.json();if(!r.ok||j?.error||j?.ok===false)throw Error(j?.error||'تعذر تحديث Google Sheets')}
+async function loadCloud(){
+  data=localData();data.transactions=data.transactions||[];data.accounts=data.accounts||[];
+  const token=localStorage.getItem(TOKEN_KEY)||'';
+  if(token&&navigator.onLine){try{const r=await fetch(`${CLOUD_URL}?token=${encodeURIComponent(token)}`,{cache:'no-store'}),j=await r.json();if(r.ok&&Array.isArray(j?.transactions)){data=j;localStorage.setItem(DATA_KEY,JSON.stringify(data))}}catch{}}
+  render();
+}
+async function removeRecord(id){
+  const t=(data.transactions||[]).find(x=>x.id===id);if(!t)return;
+  if(!confirm(`حذف "${t.title||'هذا السجل'}" بمبلغ ${amount(t.amount)}؟`))return;
+  const previous=structuredClone(data);
+  data.transactions=data.transactions.filter(x=>x.id!==id);
+  const delta=t.type==='income'?-Number(t.amount||0):t.type==='expense'?Number(t.amount||0):0;
+  data.accounts=(data.accounts||[]).map(a=>a.name===t.account?{...a,balance:Number(a.balance||0)+delta}:a);
+  localStorage.setItem(DATA_KEY,JSON.stringify(data));render();show('جاري حذف السجل من Google Sheets…');
+  try{await cloudSave(data);show('تم حذف السجل من التطبيق وGoogle Sheets ✓')}catch(err){data=previous;localStorage.setItem(DATA_KEY,JSON.stringify(data));render();show(`لم يتم الحذف: ${err.message}`,'bad')}
+}
+$('search').oninput=render;$('refresh').onclick=loadCloud;loadCloud();
+</script></body></html>
