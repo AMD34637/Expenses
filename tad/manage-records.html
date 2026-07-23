@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#602650">
   <title>حذف سجل — TAD Expenses</title>
   <style>
-    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;color:#211820;background:#f8f4f7}*{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);min-height:100vh}main{width:min(760px,100%);margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.back{color:#602650;text-decoration:none;font-weight:800}.logo{width:42px;height:42px;border-radius:14px;background:#602650;color:#fff;display:grid;place-items:center;font-weight:900}.card{background:#fff;border:1px solid #eadfe7;border-radius:22px;padding:18px;box-shadow:0 8px 28px #4d17340c}h1{font-size:25px;margin:2px 0 8px}.muted{color:#85777f;font-size:14px;line-height:1.7}.filters{display:grid;grid-template-columns:1fr auto;gap:9px;margin:16px 0}input,button{font:inherit}input{width:100%;border:1px solid #dfd2da;border-radius:13px;padding:12px;background:#fff}.refresh{border:0;border-radius:13px;padding:0 16px;background:#efe3eb;color:#602650;font-weight:800}.records{display:grid;gap:10px}.record{border:1px solid #eadfe7;border-radius:16px;padding:13px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.record h2{font-size:16px;margin:0 0 5px}.meta{color:#85777f;font-size:12px;line-height:1.7}.amount{font-weight:900;margin-top:5px}.delete{border:0;background:#fff0f0;color:#a02e2e;border-radius:11px;padding:10px 12px;font-weight:800}.empty{text-align:center;padding:30px;color:#85777f}.status{display:none;padding:11px;margin-bottom:12px;border-radius:12px;font-size:14px}.status.show{display:block}.status.ok{background:#e8f6ef;color:#196443}.status.bad{background:#fff0f0;color:#8b2828}
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;color:#211820;background:#f8f4f7}*{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);min-height:100vh}main{width:min(760px,100%);margin:auto;padding:18px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.back{color:#602650;text-decoration:none;font-weight:800}.logo{width:42px;height:42px;border-radius:14px;background:#602650;color:#fff;display:grid;place-items:center;font-weight:900}.card{background:#fff;border:1px solid #eadfe7;border-radius:22px;padding:18px;box-shadow:0 8px 28px #4d17340c}h1{font-size:25px;margin:2px 0 8px}.muted{color:#85777f;font-size:14px;line-height:1.7}.filters{display:grid;grid-template-columns:1fr auto;gap:9px;margin:16px 0}input,select,button{font:inherit}input,select{width:100%;border:1px solid #dfd2da;border-radius:13px;padding:12px;background:#fff}.refresh{border:0;border-radius:13px;padding:0 16px;background:#efe3eb;color:#602650;font-weight:800}.records{display:grid;gap:10px}.record{border:1px solid #eadfe7;border-radius:16px;padding:13px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.record h2{font-size:16px;margin:0 0 5px}.meta{color:#85777f;font-size:12px;line-height:1.7}.amount{font-weight:900;margin-top:5px}.record-actions{display:grid;gap:7px}.edit,.delete{border:0;border-radius:11px;padding:9px 11px;font-weight:800}.edit{background:#efe3eb;color:#602650}.delete{background:#fff0f0;color:#a02e2e}.empty{text-align:center;padding:30px;color:#85777f}.status{display:none;padding:11px;margin-bottom:12px;border-radius:12px;font-size:14px}.status.show{display:block}.status.ok{background:#e8f6ef;color:#196443}.status.bad{background:#fff0f0;color:#8b2828}dialog{width:min(520px,calc(100% - 28px));border:0;border-radius:22px;padding:0;box-shadow:0 20px 70px #27101f55}dialog::backdrop{background:#21182088}.editor{padding:20px}.editor h2{margin:0 0 16px}.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.editor label{display:grid;gap:6px;color:#6d5e67;font-size:13px}.wide{grid-column:1/-1}.dialog-actions{display:flex;gap:9px;margin-top:18px}.save,.cancel{border:0;border-radius:13px;padding:12px;font-weight:800}.save{background:#602650;color:#fff;flex:1}.cancel{background:#eee5eb;color:#602650}@media(max-width:520px){.editor-grid{grid-template-columns:1fr}.wide{grid-column:auto}}
   </style>
 </head>
 <body><main>
@@ -18,21 +18,33 @@
     <div class="filters"><input id="search" type="search" placeholder="ابحث بالاسم أو التصنيف أو المالك"><button id="refresh" class="refresh">تحديث</button></div>
     <div id="records" class="records"></div>
   </section>
+  <dialog id="editor"><form class="editor" method="dialog">
+    <h2>تعديل الفاتورة أو السجل</h2>
+    <div class="editor-grid">
+      <label class="wide">الاسم<input id="edit-title" required></label>
+      <label>المبلغ (ر.س)<input id="edit-amount" type="number" min="0.01" step="0.01" required></label>
+      <label>التاريخ الميلادي<input id="edit-date" type="text" inputmode="numeric" maxlength="10" placeholder="2026-07-23" required></label>
+      <label>التصنيف<input id="edit-category"></label>
+      <label>المالك<select id="edit-owner"><option>عبدالله</option><option>ثناء</option><option>مشترك</option></select></label>
+    </div>
+    <div class="dialog-actions"><button id="save-edit" class="save" type="button">حفظ التعديل</button><button class="cancel" value="cancel">إلغاء</button></div>
+  </form></dialog>
 </main>
 <script>
 const DATA_KEY='dowi-expenses-data-v1',TOKEN_KEY='tad-sync-token';
 const CLOUD_URL='https://script.google.com/macros/s/AKfycbzn3oYWOtoZC5Odx8_WppFw-QEGpGuxVNn-M_uwY2x2I0awcu5iJpquZnGo1R91mH98Ag/exec';
 const $=id=>document.getElementById(id);
-let data={transactions:[],accounts:[]};
+let data={transactions:[],accounts:[]},editingId='';
 function localData(){try{return JSON.parse(localStorage.getItem(DATA_KEY)||'{}')}catch{return {}}}
 function show(message,type='ok'){$('status').textContent=message;$('status').className=`status show ${type}`}
 function amount(v){return new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)}
-function date(v){try{return new Intl.DateTimeFormat('ar-SA',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v))}catch{return v||''}}
+function date(v){try{return new Intl.DateTimeFormat('en-GB-u-ca-gregory',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(v)).replace(',','')}catch{return v||''}}
+function isoDate(v){const d=new Date(v);return Number.isNaN(d.getTime())?'':`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function render(){
   const q=$('search').value.trim().toLowerCase();
   const rows=[...(data.transactions||[])].filter(t=>[t.title,t.category,t.owner,t.account,t.note].join(' ').toLowerCase().includes(q)).sort((a,b)=>new Date(b.date)-new Date(a.date));
   $('records').innerHTML=rows.length?'':'<div class="empty">لا توجد سجلات مطابقة</div>';
-  rows.forEach(t=>{const el=document.createElement('article');el.className='record';el.innerHTML=`<div><h2></h2><div class="meta"></div><div class="amount"></div></div><button class="delete" type="button">حذف</button>`;el.querySelector('h2').textContent=t.title||t.category||'عملية';el.querySelector('.meta').textContent=`${t.owner||'مشترك'} • ${t.category||''} • ${t.account||''} • ${date(t.date)}`;el.querySelector('.amount').textContent=`${t.type==='income'?'+':'−'} ${amount(t.amount)}`;el.querySelector('.delete').onclick=()=>removeRecord(t.id);$('records').appendChild(el)});
+  rows.forEach(t=>{const el=document.createElement('article');el.className='record';el.innerHTML=`<div><h2></h2><div class="meta"></div><div class="amount"></div></div><div class="record-actions"><button class="edit" type="button">تعديل</button><button class="delete" type="button">حذف</button></div>`;el.querySelector('h2').textContent=t.title||t.category||'عملية';el.querySelector('.meta').textContent=`${t.owner||'مشترك'} • ${t.category||''} • ${t.account||''} • ${date(t.date)}`;el.querySelector('.amount').textContent=`${t.type==='income'?'+':'−'} ${amount(t.amount)}`;el.querySelector('.edit').onclick=()=>openEditor(t.id);el.querySelector('.delete').onclick=()=>removeRecord(t.id);$('records').appendChild(el)});
 }
 async function cloudSave(next){const token=localStorage.getItem(TOKEN_KEY)||'';if(!token)throw Error('رمز مزامنة Google Sheets غير موجود. ارجع للرئيسية واضغط تحديث وأدخل الرمز.');const r=await fetch(CLOUD_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({token,data:next})});const j=await r.json();if(!r.ok||j?.error||j?.ok===false)throw Error(j?.error||'تعذر تحديث Google Sheets')}
 async function loadCloud(){
@@ -51,5 +63,19 @@ async function removeRecord(id){
   localStorage.setItem(DATA_KEY,JSON.stringify(data));render();show('جاري حذف السجل من Google Sheets…');
   try{await cloudSave(data);show('تم حذف السجل من التطبيق وGoogle Sheets ✓')}catch(err){data=previous;localStorage.setItem(DATA_KEY,JSON.stringify(data));render();show(`لم يتم الحذف: ${err.message}`,'bad')}
 }
-$('search').oninput=render;$('refresh').onclick=loadCloud;loadCloud();
+function openEditor(id){const t=(data.transactions||[]).find(x=>x.id===id);if(!t)return;editingId=id;$('edit-title').value=t.title||'';$('edit-amount').value=Number(t.amount||0);$('edit-date').value=isoDate(t.date);$('edit-category').value=t.category||'';$('edit-owner').value=t.owner||'مشترك';$('editor').showModal()}
+async function saveEdit(){
+  const t=(data.transactions||[]).find(x=>x.id===editingId);if(!t)return;
+  const title=$('edit-title').value.trim(),nextAmount=Number($('edit-amount').value),dateValue=$('edit-date').value.trim();
+  if(!title||!Number.isFinite(nextAmount)||nextAmount<=0)return show('أدخل اسمًا ومبلغًا صحيحًا.','bad');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)||Number.isNaN(new Date(`${dateValue}T00:00:00`).getTime()))return show('التاريخ يجب أن يكون ميلاديًا بصيغة YYYY-MM-DD.','bad');
+  const previous=structuredClone(data),oldAmount=Number(t.amount||0),oldDate=new Date(t.date),time=`${String(oldDate.getHours()).padStart(2,'0')}:${String(oldDate.getMinutes()).padStart(2,'0')}`;
+  const updated={...t,title,amount:nextAmount,date:new Date(`${dateValue}T${time}`).toISOString(),category:$('edit-category').value.trim()||t.category,owner:$('edit-owner').value};
+  data.transactions=data.transactions.map(x=>x.id===editingId?updated:x);
+  const balanceDelta=t.type==='income'?nextAmount-oldAmount:t.type==='expense'?oldAmount-nextAmount:0;
+  data.accounts=(data.accounts||[]).map(a=>a.name===t.account?{...a,balance:Number(a.balance||0)+balanceDelta}:a);
+  localStorage.setItem(DATA_KEY,JSON.stringify(data));$('editor').close();render();show('جاري حفظ التعديل في Google Sheets…');
+  try{await cloudSave(data);show('تم تعديل السجل وتحديث Google Sheets والرصيد ✓')}catch(err){data=previous;localStorage.setItem(DATA_KEY,JSON.stringify(data));render();show(`لم يتم التعديل: ${err.message}`,'bad')}
+}
+$('save-edit').onclick=saveEdit;$('search').oninput=render;$('refresh').onclick=loadCloud;loadCloud();
 </script></body></html>
