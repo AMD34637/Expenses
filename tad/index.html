@@ -17,11 +17,17 @@
     <a class="receipt-scan-fab" href="./receipt-scanner.html" aria-label="مسح فاتورة">
       <span>▤</span><b>مسح فاتورة</b>
     </a>
+    <a class="records-manage-fab" href="./manage-records.html" aria-label="حذف سجل">
+      <span>⌫</span><b>حذف سجل</b>
+    </a>
     <style>
       .receipt-scan-fab{position:fixed;left:18px;bottom:155px;z-index:9999;display:flex;align-items:center;gap:8px;background:#602650;color:#fff;text-decoration:none;padding:12px 15px;border-radius:18px;box-shadow:0 10px 28px #60265055;font-family:inherit}
       #root:empty + .receipt-scan-fab,#root:has(.boot) + .receipt-scan-fab{display:none}
       .receipt-scan-fab span{font-size:24px;line-height:1}.receipt-scan-fab b{font-size:13px;white-space:nowrap}
-      @media(min-width:800px){.receipt-scan-fab{bottom:28px}}
+      .records-manage-fab{position:fixed;left:18px;bottom:215px;z-index:9999;display:flex;align-items:center;gap:8px;background:#fff0f0;color:#a02e2e;text-decoration:none;padding:10px 13px;border-radius:16px;box-shadow:0 8px 22px #60265022;font-family:inherit}
+      #root:empty ~ .records-manage-fab,#root:has(.boot) ~ .records-manage-fab{display:none}
+      .records-manage-fab span{font-size:22px;line-height:1}.records-manage-fab b{font-size:12px;white-space:nowrap}
+      @media(min-width:800px){.receipt-scan-fab{bottom:28px}.records-manage-fab{bottom:88px}}
     </style>
   </body>
 </html>
